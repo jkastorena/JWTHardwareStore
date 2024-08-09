@@ -2,42 +2,55 @@
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace JWTHardwareStore;
 
 public class User
 {
-
+    public User()
+    {
+        
+    }
     public User(string name, string password, string email, string phone)
     {
-
-
+        var salt = GetSalt();
         Name = name;
-        Password = HashPassword(password);
+        Password = HashPassword(password+salt);
         Email = email;
         Phone = phone;
+        Salt = salt;
     }
 
     [Key]
-    public Guid UserId { get; set; } 
+    public Guid UserId { get; set; }
     [Required]
     public string? Name { get; set; }
     [Required]
     public string? Email { get; set; }
     [Required]
     public string? Password { get; set; }
-    public string? Salt { get; set; } = AddSalt();
+    public string? Salt { get; set; }
     [Required]
     public string? Phone { get; set; }
     public DateTime CreateOn { get; set; } = DateTime.Now;
 
+    public string GetSalt()
+    {
 
-    public static string AddSalt(){
+        var Rnd = new byte[16];
+        string salt = "";
 
-        var r = new Random();
-        int A = r.Next(10000, 90000);
-        return  A.ToString("X2");
+        using (var rng = RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(Rnd);
+            salt = Convert.ToBase64String(Rnd);
+        }
+        
+        return salt; 
     }
+
+
 
     public string HashPassword(string pass)
     {
